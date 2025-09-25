@@ -7,9 +7,11 @@ use App\Models\Category;
 use App\Models\Spot;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Can;
 
 use function Pest\Laravel\call;
 
@@ -20,7 +22,29 @@ class SpotController extends Controller
      */
     public function index()
     {
-        
+        try {
+            $spot = Spot::with([
+                    'user:id, name',
+                    'category:category,spot_id'
+                ])
+                    ->withCount(
+                        'reviews'
+                    )
+            ->withSum('reviews', 'rating')    
+            ->orderBy('created_at','desc')
+            ->paginate(request('size', 10));
+
+            return Response::json([
+                'message' => 'Spot Berhasil',
+                'data' => $spot
+            ], 200);
+        } 
+        catch (Exception $e) {
+            return Response::json([
+                'message' => $e -> getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**
@@ -69,7 +93,24 @@ class SpotController extends Controller
      */
     public function show(Spot $spot)
     {
-        //
+        try {
+            return Response::json([
+                'message' => 'List Berhasil',
+                'data' => $spot -> load([
+                    'user:id, name',
+                    'category:category,spot_id'
+                ])
+                ->loadCount([
+                    'reviews'
+                ])
+                ->loadSum('review', 'rating')
+            ], 200);
+        } catch (Exception $e){
+            return Response::json([
+                'message' => $e -> getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**
@@ -85,7 +126,45 @@ class SpotController extends Controller
      */
     public function update(Request $request, Spot $spot)
     {
-        //
+        try {
+            $validate = $request->safe()->all();
+
+            if(isset($validate['picture'])) {
+                $picture_path = Storage::disk('public')->putFile('spots' => $spot->$id,
+                'category' -> $category;
+            }
+
+            if(isset($validated['category'])) {
+                Category::where('spot_id', $spot->$id)->delete();
+
+                $categories = [];
+
+                foreach($validated['category'] as $category) {
+                    $categories[] = [
+                        'spot_id' => $spot->$id,
+                        'category' => $category
+                    ];
+                }
+
+                Category::fillAndInsert($categories);
+
+                $spot->update([
+                    'name' => $validated['nama'],
+                    'picture' => $picture_path ?? $spot->picture, 
+                    'address' => $validated['address']
+                ]);
+                return Response::json([
+                    'message' => 'Spot Berhasil',
+                    'data' => null
+                ], 200);
+            }
+        }
+        catch (Exception $e) {
+             return Response::json([
+                'message' => $e -> getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**
@@ -93,6 +172,30 @@ class SpotController extends Controller
      */
     public function destroy(Spot $spot)
     {
-        //
+        try {
+            $user = Auth::user();
+
+            if ($spot->user_id == $user->id || $user->role == 'ADMIN') {
+                if ($spot->delete()) {
+                    return Response::json([
+                    'message' => "Spot berhasil di hapus",
+                    'data' => null
+                    ], 200);
+                    
+                }
+                }
+                else {
+                    return Response::json([
+                    'message' => "Spot gagal di hapus",
+                    'data' => null
+                    ], 200);
+            }
+        }
+        catch (Exception $e) {
+            return Response::json([
+                'message' => $e -> getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 }
