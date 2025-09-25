@@ -7,62 +7,68 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Exception;
-use Illuminate\Container\Attributes\Auth;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthenticationController extends Controller
 {
-    public function login(LoginRequest $request)
-    {
-        try {
-            $validated = $request -> safe()->all();
-            if (!Auth::attempt($validated)){
-                return response()->json([
-                    'message' => "Email Atau Password Salah",
-                    'date' => null
-                ], 401);
-            }
-
-            $user = $request-> user();
-            $token = $user->create_token('laravel_api', ['*'])-> plainTextToken;
-            
-        } catch (Exception $e) {
-            return response()->json([
-                    'message' => $e ->getMessage(),
-                    'date' => null
-                ], 201);
-        }
-    }
-
-    public function register(RegisterRequest $request)
-    {
+    public function login(LoginRequest $request){
         try {
             $validated = $request->safe()->all();
-            $passwordhash = Hash::make($validated['password']);
-            $validated['password'] = $passwordhash;
-            $response = User::create($validated);
-
-            if($response) {
+            if(!Auth::attempt($validated)){
                 return response()->json([
-                    'message' => 'register berhasil',
-                    'date' => null
-                ], 201);
+                    'message' => "Email Atau Password Salah",
+                    'data'=>null
+                ],401);
             }
-        } catch (Exception $e) {
+            $user = $request->user();
+            $token = $user->createToken('laravel_api',['*'])->plainTextToken;
             return response()->json([
-                    'message' => $e ->getMessage(),
-                    'date' => null
-                ], 201);
+                'message' => "Login Berhasil",
+                'user' => $user,
+                'token' => $token
+            ],401);
+        } catch (Exception $e){
+            return response()->json([
+                    'message' => $e->getMessage(),
+                    'data' => null
+                ], 500);
         }
     }
-
-    public function logout()
-    {
+    public function register(RegisterRequest $request){
         try {
+            $validated = $request->safe()->all();
+            $passwordHash = Hash::make($validated['password']);
+            $validated['password'] = $passwordHash;
+            $response = User::create($validated);
 
-        } catch (Exception $e) {
-            //
+            if($response){
+                return response()->json([
+                    'message' => 'register berhasil',
+                    'data' => null
+                ], 201);
+            }
+        } catch (Exception $e){
+            return response()->json([
+                    'message' => $e->getMessage(),
+                    'data' => null
+                ], 500);
+        }
+    }
+    public function logout(Request $request){
+        try {
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'message' => 'Berhasil Logout',
+                'data' => null
+            ],200);
+        } catch (Exception $e){
+            return response()->json([
+                    'message' => $e->getMessage(),
+                    'data' => null
+                ], 500);
         }
     }
 }

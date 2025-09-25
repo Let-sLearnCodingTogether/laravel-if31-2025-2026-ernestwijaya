@@ -6,14 +6,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('user', function(){
+Route::get('user',function(){
     return view('user');
 });
-
-Route::get('user-profile/{name}/{age}', function($name, $age){
+Route::get('user-profile/{name}/{umur}',function($name,$umur){
     return view('user',[
-    'user_name' => $name,
-    'user_age' => $age
+        'user_name' => $name,
+        'umur' => $umur
     ]);
-
 });

@@ -2,11 +2,10 @@
     <div>
         User Page
     </div>
-
     <div>
-        while, {{ $user_name }}
-        {{ $user_age }}
+    Hi, {{ $user_name }}
     </div>
-     
-
+    <div>
+        umur {{ $umur }}
+    </div>
 </div>

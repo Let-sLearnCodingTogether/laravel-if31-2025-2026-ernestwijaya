@@ -2,17 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
-class LoginRequest extends FormRequest
+class UpdateSpotRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::guest();
+        return Auth::check();
     }
 
     /**
@@ -23,8 +23,11 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
-            'password' => 'required'
+            'name' =>'required|string',
+            'address' => 'required|string',
+            'picture' => 'required|image|image:jpeg,png,jpg,webp',
+            'category' => 'nullable|array|min:1',
+            'category' => 'nullable|string'
         ];
     }
 }
